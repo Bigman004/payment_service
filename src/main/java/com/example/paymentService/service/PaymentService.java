@@ -1,12 +1,14 @@
 package com.example.paymentService.service;
 
 import com.example.paymentService.Model.AppUser;
+import com.example.paymentService.Model.Order;
 import com.example.paymentService.Model.PaymentPaystack;
 import com.example.paymentService.Wrapper.ModelWrappers;
 import com.example.paymentService.dto.AppUserDto;
 import com.example.paymentService.dto.CreatePlanDto;
 import com.example.paymentService.dto.InitializePaymentDto;
 import com.example.paymentService.dto.OrderDto;
+import com.example.paymentService.feign.EmailInterface;
 import com.example.paymentService.repository.AppUserRepository;
 import com.example.paymentService.repository.PaymentRepository;
 import com.example.paymentService.repository.OrderRepository;
@@ -52,6 +54,9 @@ public class PaymentService {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private EmailInterface email;
 
     @Value("${applyforme.paystack.secret.key}")
     private String paystackSecretKey;
@@ -99,7 +104,7 @@ public class PaymentService {
             }
             ObjectMapper objectMapper = new ObjectMapper();
             createPlanResponse = objectMapper.readValue(result.toString(), CreatePlanResponse.class);
-            System.out.println(createPlanResponse.getStatus());
+
 
 
         }
@@ -127,7 +132,6 @@ public class PaymentService {
                 email(order.getEmail()).
                 currency("NGN").
                 channel("bank").
-                callbackUrl("https://yesterday-realize-drainage-essentially.trycloudflare.com/verify").
                 build();
         try{
             Gson gson = new Gson();
@@ -177,17 +181,15 @@ public class PaymentService {
      * @throws Exception
      */
     public PaymentVerificationResponse verifyPayment(PaymentVerificationResponse paymentVerificationResponse) throws Exception {
-        logger.info("payment verification started");
         PaymentPaystack paymentPaystack =null;
-        logger.info(paymentVerificationResponse.toString());
-
+        logger.info("payment started");
         try{
-
             if(!(paymentVerificationResponse.getEvent().equals("charge.success"))){
                 throw new Exception("Payment Verification Failed");
+
             }
-            else if(paymentVerificationResponse.getEvent().equals("charge.success")){
-                AppUser appUser = appUserRepository.findById((long) 1).orElse(null);
+            else{
+                AppUser appUser = appUserRepository.findById((long) 1).orElse(null); //test phase database initialized with one user
                 paymentPaystack = PaymentPaystack.builder()
                         .appUser(appUser)
                         .reference(paymentVerificationResponse.getData().getReference())
@@ -198,12 +200,26 @@ public class PaymentService {
                         .channel(paymentVerificationResponse.getData().getChannel())
                         .createdOn(new Date())
                         .build();
+                Order order = orderService.findOrderByReference(paymentPaystack.getReference());
+                orderService.payOrder(order);
+                if(paymentRepository.existsByReference(paymentPaystack.getReference())){
+                    throw new Exception("Payment already exists");
+                }
+                paymentRepository.save(paymentPaystack);
+                logger.info("payment verification finished");
+                try {
+                    logger.info("processing receipt");
+                    ResponseEntity<String> response = email.sendReceipt(order);
+                    if (response.getStatusCode() == HttpStatus.OK)
+                        logger.info("receipt sent to owner");
+                }
+                catch (Exception e){
+                    logger.error(e.getMessage());
+                }
             }
         } catch (Exception e) {
-            throw new Exception("paystack");
+            logger.error(e.getMessage());
         }
-        paymentRepository.save(paymentPaystack);
-        logger.info("payment verification finished");
         return paymentVerificationResponse;
     }
 

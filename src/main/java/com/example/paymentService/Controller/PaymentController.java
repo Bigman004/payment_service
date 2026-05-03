@@ -4,8 +4,12 @@ import com.example.paymentService.dto.AppUserDto;
 import com.example.paymentService.dto.InitializePaymentDto;
 import com.example.paymentService.dto.OrderDto;
 import com.example.paymentService.response.PaymentVerificationResponse;
+import com.example.paymentService.service.OrderService;
 import com.example.paymentService.service.PaymentService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +19,14 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
+    @Autowired
+    private OrderService orderService;
+
     @GetMapping("/welcome")
-    public String welcome() {
+    public String welcome(@RequestHeader HttpHeaders headers) {
+
+        System.out.println(headers.containsHeader("Authorization"));
+        System.out.println(headers.getFirst("Authorization"));
         return "Welcome to PaymentService";
     }
     @GetMapping("/initialize_payment")
@@ -70,6 +80,9 @@ public class PaymentController {
         catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
+    }
+    @GetMapping("/order/{l}")
+    public ResponseEntity<?> order(@PathVariable long l) {
+        return new ResponseEntity<>(orderService.getOrder((long) l), HttpStatus.OK);
     }
 }

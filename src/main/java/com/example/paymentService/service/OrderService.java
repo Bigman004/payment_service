@@ -29,4 +29,20 @@ public class OrderService {
         Snowflake snowflake = IdUtil.getSnowflake(1, 1);
         return snowflake.nextId();
     }
+    public Order findOrderByReference(String reference){
+        return orderRepository.findByReference(reference);
+    }
+
+    protected void payOrder(Order order) {
+        order.setPayment(true);
+        orderRepository.save(order);
+    }
+    public boolean checkOrderStatus(String reference){
+        Order order = orderRepository.findByReference(reference);
+        return order.getPayment();
+    }
+
+    public Order getOrder(long l) {
+        return orderRepository.findById(l).orElse(null);
+    }
 }
