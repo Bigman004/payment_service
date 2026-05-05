@@ -85,4 +85,8 @@ public class PaymentController {
     public ResponseEntity<?> order(@PathVariable long l) {
         return new ResponseEntity<>(orderService.getOrder((long) l), HttpStatus.OK);
     }
+    @GetMapping("/ping")
+    public ResponseEntity<?> ping() {
+        return new ResponseEntity<>("pong", HttpStatus.OK);
+    }
 }
