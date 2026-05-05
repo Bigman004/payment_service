@@ -19,7 +19,7 @@ jobs:
         run: >
          mvn clean install
          -DDB_URL=${{secrets.DB_URL}}
-         -DDB_PASSWORD=${{secret.DB_PASSWORD}}
+         -DDB_PASSWORD=${{secrets.DB_PASSWORD}}
          -DDB_USERNAME=${{secrets.DB_USERNAME}}
          -DSHARED_KEY=${{secrets.SHARED_KEY}}
       - name: build image
