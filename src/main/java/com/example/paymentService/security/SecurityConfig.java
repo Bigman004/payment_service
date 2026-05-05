@@ -17,7 +17,7 @@ public class SecurityConfig {
                 .csrf(customizer -> customizer.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(requests -> requests.requestMatchers(
-                        "/verify"
+                        "/ping"
                 ).permitAll().anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .build();
