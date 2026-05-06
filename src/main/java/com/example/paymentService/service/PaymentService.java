@@ -8,6 +8,7 @@ import com.example.paymentService.dto.AppUserDto;
 import com.example.paymentService.dto.CreatePlanDto;
 import com.example.paymentService.dto.InitializePaymentDto;
 import com.example.paymentService.dto.OrderDto;
+import com.example.paymentService.events.EmailEvent;
 import com.example.paymentService.feign.EmailInterface;
 import com.example.paymentService.repository.AppUserRepository;
 import com.example.paymentService.repository.PaymentRepository;
@@ -27,8 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,6 +61,9 @@ public class PaymentService {
 
     @Autowired
     private EmailInterface email;
+
+    @Autowired
+    ApplicationEventPublisher publisher;
 
     @Value("${applyforme.paystack.secret.key}")
     private String paystackSecretKey;
@@ -207,15 +214,7 @@ public class PaymentService {
                 }
                 paymentRepository.save(paymentPaystack);
                 logger.info("payment verification finished");
-                try {
-                    logger.info("processing receipt");
-                    ResponseEntity<String> response = email.sendReceipt(order);
-                    if (response.getStatusCode() == HttpStatus.OK)
-                        logger.info("receipt sent to owner");
-                }
-                catch (Exception e){
-                    logger.error(e.getMessage());
-                }
+                publisher.publishEvent(new EmailEvent(order));
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -232,6 +231,18 @@ public class PaymentService {
                 .build());
     }
 
-
+    @EventListener
+    @Async
+    public void sendEmail(EmailEvent emailEvent){
+        logger.info("sending email");
+        try {
+            ResponseEntity<String> response = email.sendReceipt(emailEvent.order());
+            if(response.getStatusCode().equals(HttpStatus.OK))
+                logger.info("email sent to owner");
+        }
+        catch (Exception e){
+            logger.error(e.getMessage());
+        }
+    }
 
 }
