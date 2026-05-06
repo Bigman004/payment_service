@@ -222,27 +222,13 @@ public class PaymentService {
         return paymentVerificationResponse;
     }
 
-    public void createUser(AppUserDto appUser){
+    public void createUser(AppUserDto appUser) {
         appUserRepository.save(AppUser.builder()
                 .creationDate(new Date())
                 .email(appUser.getEmail())
                 .address(appUser.getAddress())
                 .username(appUser.getUsername())
                 .build());
-    }
-
-    @EventListener
-    @Async
-    public void sendEmail(EmailEvent emailEvent){
-        logger.info("sending email");
-        try {
-            ResponseEntity<String> response = email.sendReceipt(emailEvent.order());
-            if(response.getStatusCode().equals(HttpStatus.OK))
-                logger.info("email sent to owner");
-        }
-        catch (Exception e){
-            logger.error(e.getMessage());
-        }
     }
 
 }
