@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient("mailing-service")
+@FeignClient(name = "mailing-service", url = "https://mailing-service-99uc.onrender.com")
 public interface EmailInterface {
     @PostMapping("/send_reciept")
     ResponseEntity<String> sendReceipt(@RequestBody Order order);
