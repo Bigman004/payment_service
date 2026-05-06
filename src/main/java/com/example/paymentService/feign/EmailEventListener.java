@@ -15,7 +15,8 @@ public class EmailEventListener {
     @Autowired
     private EmailInterface email;
 
-
+    @EventListener
+    @Async
     public void sendEmail(EmailEvent emailEvent){
         log.info("sendEmail running on thread: {}", Thread.currentThread().getName());
         log.info("sending email");
