@@ -1,5 +1,6 @@
 package com.example.paymentService.Controller;
 
+import com.example.paymentService.Model.PaymentPaystack;
 import com.example.paymentService.dto.AppUserDto;
 import com.example.paymentService.dto.InitializePaymentDto;
 import com.example.paymentService.dto.OrderDto;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class PaymentController {
@@ -34,18 +37,6 @@ public class PaymentController {
 
         return new ResponseEntity<>(OrderDto.builder().build(), HttpStatus.OK);
     }
-    @PostMapping("/initialize_payment")
-    public ResponseEntity<?> initializePayemnt(@RequestBody OrderDto plan) {
-        System.out.println(plan.toString());
-
-        try {
-            return new ResponseEntity<>(paymentService.createPlan(plan), HttpStatus.OK);
-        }
-        catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
-
     @GetMapping("/payment")
     public ResponseEntity<?> payment() {
         return new ResponseEntity<>(InitializePaymentDto.builder().build(), HttpStatus.OK);
@@ -81,6 +72,11 @@ public class PaymentController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+    @GetMapping("/check-status")
+    public ResponseEntity<?> checkPayments(@RequestParam String email){
+        ListWrapper listWrapper = new ListWrapper(paymentService.findByEmail(email));
+        return new ResponseEntity<>(listWrapper ,HttpStatus.OK);
+    }
     @GetMapping("/order/{l}")
     public ResponseEntity<?> order(@PathVariable long l) {
         return new ResponseEntity<>(orderService.getOrder((long) l), HttpStatus.OK);
@@ -88,5 +84,15 @@ public class PaymentController {
     @GetMapping("/ping")
     public ResponseEntity<?> ping() {
         return new ResponseEntity<>("pong", HttpStatus.OK);
+    }
+    public class ListWrapper{
+        public List<PaymentPaystack> list;
+        public ListWrapper(List<PaymentPaystack> list){
+            this.list = list;}
+
+        public List<PaymentPaystack> getList() {
+
+            return list;
+        }
     }
 }

@@ -40,7 +40,9 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static com.example.paymentService.Constant.APIConstant.*;
 
@@ -70,58 +72,6 @@ public class PaymentService {
     //this variable for creating logs during payment verification
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
-    /***
-     * This function creates a plan on the paystack for subscription
-     * @param plan
-     * @return
-     * @throws Exception
-     */
-    public CreatePlanResponse createPlan(OrderDto plan) throws Exception {
-        CreatePlanResponse createPlanResponse  = null;
-        CreatePlanDto createPlanDto = CreatePlanDto.builder()
-                .name("purchase")
-                .interval(plan.getInterval())
-                .amount(plan.getAmount())
-                .build();
-        try{
-            Gson gson = new Gson();
-            StringEntity stringEntity = new StringEntity(gson.toJson(createPlanDto));
-            HttpPost httpPost = new HttpPost(PAYSTACK_INIT);
-            CloseableHttpClient client = HttpClients.createDefault();
-            httpPost.setEntity(stringEntity);
-            httpPost.addHeader("Content-Type", "application/json");
-            httpPost.addHeader("Authorization", "Bearer "+ paystackSecretKey);
-            CloseableHttpResponse response = client.execute(httpPost);
-            System.out.println(response);
-            StringBuilder result = new StringBuilder();
-
-            if(response.getStatusLine().getStatusCode() == 201){
-                BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-                String line;
-                while ((line = br.readLine()) != null) {
-                    result.append(line);
-                }
-                br.close();
-                System.out.println(result.toString());
-            }
-            else{
-                throw new Exception("Failed : HTTP error code : " + response.getStatusLine().getStatusCode() +
-                        "paystack cannot process this request");
-
-            }
-            ObjectMapper objectMapper = new ObjectMapper();
-            createPlanResponse = objectMapper.readValue(result.toString(), CreatePlanResponse.class);
-
-
-
-        }
-        catch (Throwable e){
-            e.printStackTrace();
-        }
-        planRepository.save(ModelWrappers.MapperToPlan(plan));
-        return createPlanResponse;
-
-    }
 
     /***
      *
@@ -133,6 +83,13 @@ public class PaymentService {
      * @throws Exception
      */
     public InitializePaymentResponse initializePayment(OrderDto order) throws Exception {
+        if(!appUserRepository.existsByEmail(order.getEmail())){
+            createUser(AppUserDto.builder()
+            .email(order.getEmail())
+                    .creationDate(new Date())
+                    .name(order.getEmail())
+                    .build());
+        }
         InitializePaymentResponse initializePaymentResponse = null;
         InitializePaymentDto initializePaymentDto = InitializePaymentDto.builder()
                 .amount(order.getAmount()).
@@ -196,7 +153,10 @@ public class PaymentService {
 
             }
             else{
-                AppUser appUser = appUserRepository.findById((long) 1).orElse(null); //test phase database initialized with one user
+                Order order = orderService.findOrderByReference(
+                        paymentVerificationResponse.getData().getReference()
+                );
+                AppUser appUser = appUserRepository.findByEmail(order.getEmail()); //test phase database initialized with one user
                 paymentPaystack = PaymentPaystack.builder()
                         .appUser(appUser)
                         .reference(paymentVerificationResponse.getData().getReference())
@@ -207,7 +167,6 @@ public class PaymentService {
                         .channel(paymentVerificationResponse.getData().getChannel())
                         .createdOn(new Date())
                         .build();
-                Order order = orderService.findOrderByReference(paymentPaystack.getReference());
                 orderService.payOrder(order);
                 if(paymentRepository.existsByReference(paymentPaystack.getReference())){
                     throw new Exception("Payment already exists");
@@ -221,7 +180,10 @@ public class PaymentService {
         }
         return paymentVerificationResponse;
     }
-
+    public List<PaymentPaystack> findByEmail(String email){
+        AppUser user = appUserRepository.findByEmail(email);
+        return paymentRepository.findAllByAppUser(user);
+    }
     public void createUser(AppUserDto appUser) {
         appUserRepository.save(AppUser.builder()
                 .creationDate(new Date())
