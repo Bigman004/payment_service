@@ -73,7 +73,7 @@ public class PaymentController {
         ListWrapper listWrapper = new ListWrapper(paymentService.findByEmail(email));
         return new ResponseEntity<>(listWrapper ,HttpStatus.OK);
     }
-    @GetMapping("/order/{l}")
+    @GetMapping("/order/{reference}")
     public ResponseEntity<?> order(@PathVariable String reference) {
         return new ResponseEntity<>(orderService.getOrderByReference(reference), HttpStatus.OK);
     }
