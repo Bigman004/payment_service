@@ -9,13 +9,12 @@ import lombok.Data;
 @Builder
 @Data
 @AllArgsConstructor
-public class CreatePlanDto {
-    @JsonProperty
-    private String name;
+public class RequestPaymentDto {
+    private String reference;
 
-    private String interval;
+    private String paidAt;
     private Integer amount;
 
-    public CreatePlanDto(){}
+    public RequestPaymentDto(){}
 
 }

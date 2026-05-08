@@ -3,23 +3,19 @@ package com.example.paymentService.service;
 import com.example.paymentService.Model.AppUser;
 import com.example.paymentService.Model.Order;
 import com.example.paymentService.Model.PaymentPaystack;
-import com.example.paymentService.Wrapper.ModelWrappers;
 import com.example.paymentService.dto.AppUserDto;
-import com.example.paymentService.dto.CreatePlanDto;
 import com.example.paymentService.dto.InitializePaymentDto;
 import com.example.paymentService.dto.OrderDto;
+import com.example.paymentService.dto.RequestPaymentDto;
 import com.example.paymentService.events.EmailEvent;
 import com.example.paymentService.feign.EmailInterface;
 import com.example.paymentService.repository.AppUserRepository;
 import com.example.paymentService.repository.PaymentRepository;
 import com.example.paymentService.repository.OrderRepository;
-import com.example.paymentService.response.CreatePlanResponse;
 import com.example.paymentService.response.InitializePaymentResponse;
 import com.example.paymentService.response.PaymentVerificationResponse;
 import com.google.gson.Gson;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -29,20 +25,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.paymentService.Constant.APIConstant.*;
 
@@ -180,9 +170,11 @@ public class PaymentService {
         }
         return paymentVerificationResponse;
     }
-    public List<PaymentPaystack> findByEmail(String email){
+    public List<RequestPaymentDto> findByEmail(String email){
         AppUser user = appUserRepository.findByEmail(email);
-        return paymentRepository.findAllByAppUser(user);
+        return paymentRepository.findAllByAppUser(user).stream()
+                .map(payment -> mapToRequestPaymentDto(payment))
+                .collect(Collectors.toList());
     }
     public void createUser(AppUserDto appUser) {
         appUserRepository.save(AppUser.builder()
@@ -191,6 +183,12 @@ public class PaymentService {
                 .address(appUser.getAddress())
                 .username(appUser.getUsername())
                 .build());
+    }
+    static RequestPaymentDto mapToRequestPaymentDto(PaymentPaystack paymentPaystack){
+        return RequestPaymentDto.builder()
+                .reference(paymentPaystack.getReference())
+                .amount(Integer.parseInt(paymentPaystack.getAmount().toString())/100)
+                .build();
     }
 
 }

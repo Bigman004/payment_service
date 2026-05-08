@@ -4,6 +4,7 @@ import com.example.paymentService.Model.PaymentPaystack;
 import com.example.paymentService.dto.AppUserDto;
 import com.example.paymentService.dto.InitializePaymentDto;
 import com.example.paymentService.dto.OrderDto;
+import com.example.paymentService.dto.RequestPaymentDto;
 import com.example.paymentService.response.PaymentVerificationResponse;
 import com.example.paymentService.service.OrderService;
 import com.example.paymentService.service.PaymentService;
@@ -86,11 +87,11 @@ public class PaymentController {
         return new ResponseEntity<>("pong", HttpStatus.OK);
     }
     public class ListWrapper{
-        public List<PaymentPaystack> list;
-        public ListWrapper(List<PaymentPaystack> list){
+        public List<RequestPaymentDto> list;
+        public ListWrapper(List<RequestPaymentDto> list){
             this.list = list;}
 
-        public List<PaymentPaystack> getList() {
+        public List<RequestPaymentDto> getList() {
 
             return list;
         }
