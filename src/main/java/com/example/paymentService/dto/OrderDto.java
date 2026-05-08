@@ -14,7 +14,7 @@ public class OrderDto {
     private Item item;
     private String email;
     private String reference;
-    private String amount;
+    private Integer amount;
 
     public Integer getAmount() {
         int count = 0;

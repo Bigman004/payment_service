@@ -6,6 +6,7 @@ import com.example.paymentService.Model.Order;
 import com.example.paymentService.dto.OrderDto;
 import com.example.paymentService.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -44,5 +45,16 @@ public class OrderService {
 
     public Order getOrder(long l) {
         return orderRepository.findById(l).orElse(null);
+    }
+
+    public OrderDto getOrderByReference(String reference) {
+        Order order = orderRepository.findByReference(reference);
+        return OrderDto.builder()
+                .reference(order.getReference())
+                .email(order.getEmail())
+                .item(order.getItem())
+                .amount(order.getAmount())
+                .code(order.getCode())
+                .build();
     }
 }

@@ -59,11 +59,6 @@ public class PaymentController {
         return new ResponseEntity<>(AppUserDto.builder().build(), HttpStatus.OK);
 
     }
-    @PostMapping("/create_user")
-    public ResponseEntity<?> createUser(@RequestBody AppUserDto appUserDto) {
-        paymentService.createUser(appUserDto);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
     @PostMapping("/verify")
     public ResponseEntity<?> verifyPayment(@RequestBody PaymentVerificationResponse paymentVerificationResponse) {
         try {
@@ -79,8 +74,8 @@ public class PaymentController {
         return new ResponseEntity<>(listWrapper ,HttpStatus.OK);
     }
     @GetMapping("/order/{l}")
-    public ResponseEntity<?> order(@PathVariable long l) {
-        return new ResponseEntity<>(orderService.getOrder((long) l), HttpStatus.OK);
+    public ResponseEntity<?> order(@PathVariable String reference) {
+        return new ResponseEntity<>(orderService.getOrderByReference(reference), HttpStatus.OK);
     }
     @GetMapping("/ping")
     public ResponseEntity<?> ping() {
