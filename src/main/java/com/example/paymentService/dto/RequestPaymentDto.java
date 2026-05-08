@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 
 @Builder
 @Data
@@ -13,7 +15,7 @@ public class RequestPaymentDto {
     private String reference;
 
     private String paidAt;
-    private Integer amount;
+    private BigDecimal amount;
 
     public RequestPaymentDto(){}
 

@@ -187,7 +187,7 @@ public class PaymentService {
     static RequestPaymentDto mapToRequestPaymentDto(PaymentPaystack paymentPaystack){
         return RequestPaymentDto.builder()
                 .reference(paymentPaystack.getReference())
-                .amount(Integer.parseInt(paymentPaystack.getAmount().toString())/100)
+                .amount(paymentPaystack.getAmount())
                 .build();
     }
 
