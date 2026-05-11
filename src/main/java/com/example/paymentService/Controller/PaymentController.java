@@ -8,6 +8,7 @@ import com.example.paymentService.dto.RequestPaymentDto;
 import com.example.paymentService.response.PaymentVerificationResponse;
 import com.example.paymentService.service.OrderService;
 import com.example.paymentService.service.PaymentService;
+import com.google.gson.Gson;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,9 +61,17 @@ public class PaymentController {
 
     }
     @PostMapping("/verify")
-    public ResponseEntity<?> verifyPayment(@RequestBody PaymentVerificationResponse paymentVerificationResponse) {
+    public ResponseEntity<?> verifyPayment(@RequestBody String rawBody,
+                                           @RequestHeader("x-paystack-signature") String signature ) {
+
+        if(!paymentService.verifyPaystack(rawBody, signature )) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         try {
-            return new ResponseEntity<>(paymentService.verifyPayment(paymentVerificationResponse), HttpStatus.OK);
+            PaymentVerificationResponse paymentVerificationResponse = new Gson()
+                    .fromJson(rawBody, PaymentVerificationResponse.class);
+            return new ResponseEntity<>(paymentService.verifyPayment(paymentVerificationResponse),
+                    HttpStatus.OK);
         }
         catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -81,6 +90,8 @@ public class PaymentController {
     public ResponseEntity<?> ping() {
         return new ResponseEntity<>("pong", HttpStatus.OK);
     }
+
+
     public class ListWrapper{
         public List<RequestPaymentDto> list;
         public ListWrapper(List<RequestPaymentDto> list){

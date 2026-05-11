@@ -15,6 +15,7 @@ import com.example.paymentService.repository.OrderRepository;
 import com.example.paymentService.response.InitializePaymentResponse;
 import com.example.paymentService.response.PaymentVerificationResponse;
 import com.google.gson.Gson;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -28,8 +29,18 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -190,5 +201,26 @@ public class PaymentService {
                 .amount(paymentPaystack.getAmount())
                 .build();
     }
+    public boolean verifyPaystack(String eventData, String signature) {
+        try {
+            Mac hmac = Mac.getInstance("HmacSHA512");
+            SecretKeySpec secretKey = new SecretKeySpec(
+                    paystackSecretKey.getBytes(StandardCharsets.UTF_8),
+                    "HmacSHA512"
+            );
+            hmac.init(secretKey);
 
+            byte[] digest = hmac.doFinal(eventData.getBytes(StandardCharsets.UTF_8));
+            String result = Hex.encodeHexString(digest);
+
+            return MessageDigest.isEqual(
+                    result.getBytes(StandardCharsets.UTF_8),
+                    signature.getBytes(StandardCharsets.UTF_8)
+            );
+
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            logger.error("Paystack HMAC verification failed", e);
+            return false;
+        }
+    }
 }
