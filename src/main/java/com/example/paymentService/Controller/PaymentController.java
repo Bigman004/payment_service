@@ -62,9 +62,10 @@ public class PaymentController {
     }
     @PostMapping("/verify")
     public ResponseEntity<?> verifyPayment(@RequestBody String rawBody,
-                                           @RequestHeader("x-paystack-signature") String signature ) {
+                                           @RequestHeader HttpHeaders headers) {
+        String signature = headers.getFirst("x-paystack-signature");
 
-        if(!paymentService.verifyPaystack(rawBody, signature )) {
+        if(!paymentService.verifyPaystack(rawBody, signature)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         try {
